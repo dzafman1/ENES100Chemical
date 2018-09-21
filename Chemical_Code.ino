@@ -11,7 +11,7 @@
 Enes100 enes("Group 3", CHEMICAL, 3, 8, 9);
 
 void setup() {
-    // Retrieve the destination
+    // Retrieve the destinations
     while (!enes.retrieveDestination()) {
         enes.println("Unable to retrieve location");
     }
