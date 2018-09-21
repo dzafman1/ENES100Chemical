@@ -18,7 +18,7 @@ void setup() {
 
     enes.print("My destination is at ");
     enes.print(enes.destination.x);
-    enes.print(",");
+    enes.print(", ");
     enes.println(enes.destination.y);
 }
 
