@@ -1,46 +1,45 @@
-#include "Enes100.h"
+#include "Enes100Simulation.h"
+#include "DFRTankSimulation.h"
 
-/* Create a new Enes100 object
- * Parameters:
- *  string teamName
- *  int teamType
- *  int markerId
- *  int rxPin
- *  int txPin
- */
-Enes100 enes("Group 3", CHEMICAL, 3, 8, 9);
+#define abs(x) ((x)>0?(x):-(x))
+
+Enes100Simulation enes;
+DFRTankSimulation tank;
 
 void setup() {
-    // Retrieve the destinations
-    while (!enes.retrieveDestination()) {
-        enes.println("Unable to retrieve location");
-    }
 
-    enes.print("My destination is at ");
-    enes.print(enes.destination.x);
-    enes.print(", ");
-    enes.println(enes.destination.y);
+  tank.init();
+
+  enes.println("Starting Navigation");
+
+  while (!enes.retrieveDestination());
+
+  while (!enes.updateLocation());
+
 }
 
 void loop() {
-    // Update the OSV's current location
-    if (enes.updateLocation()) {
-        enes.println("Huzzah! Location updated!");
-        enes.print("My x coordinate is ");
-        enes.println(enes.location.x);
-        enes.print("My y coordinate is ");
-        enes.println(enes.location.y);
-        enes.print("My theta is ");
-        enes.println(enes.location.theta);
-    } else {
-        enes.println("Sad trombone... I couldn't update my location");
-    }
 
-    enes.navigated();
+  //turn to face forward
+  while (abs(enes.location.theta) > 0.05) {
 
-    // Transmit the initial pH of the pool
-    enes.baseObjective(2.7);
+    tank.setLeftMotorPWM(255);
+    tank.setRightMotorPWM(-255);
 
-    // Transmit the final pH of the pool
-    enes.baseObjective(7.0);
+    while (!enes.updateLocation());
+    
+  }
+
+  //move forward
+  tank.setLeftMotorPWM(255);
+  tank.setRightMotorPWM(255);
+
+  while (enes.readDistanceSensor(1) > 0.2) ;
+
+  //stop once an obstacle is seen
+  tank.turnOffMotors();
+  enes.println("Found Obstacle");
+
+  while(1);
+
 }
