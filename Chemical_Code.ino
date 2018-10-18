@@ -34,14 +34,22 @@ void loop() {
   tank.setLeftMotorPWM(255);
   tank.setRightMotorPWM(255);
 
-  while (enes.readDistanceSensor(1) > 0.2) ;
+  while (enes.readDistanceSensor(1) >= 0.5){
 
   //stop once an obstacle is seen
   tank.turnOffMotors();
   enes.println("Found Obstacle");
-while(enes.readDistanceSensor(1) < 0.5 && enes.readDistanceSensor(0) < 0.5 && enes.readDistanceSensor(2) < 0.5){
+  }
+if(enes.readDistanceSensor(1) < 0.5 && enes.readDistanceSensor(0) < 0.5 && enes.readDistanceSensor(2) < 0.5){
   tank.setLeftMotorPWM(-255);
-  tank.setRightMotorPWM(255);
+  tank.setRightMotorPWM(-255);
+  wait(200);
+  tank.setLeftMotorPWM(255);
+  tank.setLeftMotorPWM(-255);
+  if(enes.readDistanceSensor(1) > 0.5){
+    break;
+  }
 }
+  
 
 }
