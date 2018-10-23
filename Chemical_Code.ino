@@ -24,11 +24,11 @@ void setup() {
 
 void loop() {
   int j = false;
-  
+  enes.print( enes.destination.x);
   //turn to face forward
 
 
-  locUpdate();
+  missionSite();
   //move forward
   tank.setLeftMotorPWM(255);
   tank.setRightMotorPWM(255);
@@ -60,6 +60,7 @@ while(j){
   while (!enes.retrieveDestination());
 
   while (!enes.updateLocation());
+  
   missionSite();
   }
 }
@@ -73,10 +74,32 @@ void locUpdate(){
   }
 }
 void missionSite(){
-  while (abs(enes.location.theta) > 0.02) {
+  enes.updateLocation();
+  enes.retrieveDestination();
+  float currentX = enes.location.x;
+  float currentY = enes.location.y;
+  float currentTheta = enes.location.theta;
+  float destinationX = enes.destination.x;
+  float destinationY = enes.destination.y;
+
+  float EPSILON = 0.111;
+  float deltY = (destinationY - currentY);
+  float deltX = (destinationX - currentX);
+
+  float destinationTheta = atan(deltY / deltX);
+ /* enes.println(currentX);
+  enes.println(currentY);
+  enes.println(destinationX);
+  enes.println(destinationY);
+  enes.println(destinationTheta);
+  */
+  while(destinationTheta != currentTheta || abs(destinationTheta - currentTheta) < EPSILON){
     tank.setLeftMotorPWM(255);
     tank.setRightMotorPWM(-255);
-    while (!enes.retrieveDestination());
+      //UPDATE
     
   }
+
+  
+  
 }
