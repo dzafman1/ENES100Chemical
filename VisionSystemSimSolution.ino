@@ -36,16 +36,16 @@ while(enes.readDistanceSensor(1) < 0.5 || enes.readDistanceSensor(0) < 0.5 || en
   enes.println("Found Obstacle");
   tank.setLeftMotorPWM(-255);
   tank.setRightMotorPWM(-255);
-  delay(400);
+  delay(600);
   tank.setLeftMotorPWM(0);
   tank.setRightMotorPWM(0);
   enes.updateLocation();
-   if(enes.location.y <= 1.5){
+   if(enes.location.y <= 1.2){
      tank.setLeftMotorPWM(-255);
   tank.setRightMotorPWM(255);
   delay(700);
    } 
-   if(enes.location.y > 1.5){
+   if(enes.location.y > 1.2){
     tank.setLeftMotorPWM(255);
     tank.setRightMotorPWM(-255);
     delay(700);
@@ -54,14 +54,17 @@ while(enes.readDistanceSensor(1) < 0.5 || enes.readDistanceSensor(0) < 0.5 || en
 
   tank.setLeftMotorPWM(255);
   tank.setRightMotorPWM(255);
-  delay(1500);
+  delay(2000);
   missionSite();
 }
-
-  if(enes.location.x==enes.destination.x && enes.location.y==enes.destination.y){
-    tank.setLeftMotorPWM(0);
-    tank.setRightMotorPWM(0);
-  }
+  enes.updateLocation();
+  float EPSILON = 0.01;
+  enes.println(enes.destination.x);
+  enes.println(enes.destination.y);
+   if(enes.destination.x<=enes.location.x+EPSILON && enes.destination.x>=enes.location.x-EPSILON && enes.destination.y<=enes.location.y+EPSILON && enes.destination.y>=enes.location.y-EPSILON){
+       tank.setLeftMotorPWM(0);
+       tank.setRightMotorPWM(0);
+    }
   
 }
 
@@ -79,12 +82,12 @@ void missionSite(){
   float destinationTheta = atan(deltY/ deltX) * 100 / 100;
   while(destinationTheta != currentTheta){
     if(destinationTheta>=0){
-    tank.setLeftMotorPWM(-40);
-    tank.setRightMotorPWM(40);
+    tank.setLeftMotorPWM(40);
+    tank.setRightMotorPWM(-40);
     }
     if(destinationTheta<0){
-    tank.setLeftMotorPWM(40);
-    tank.setRightMotorPWM(-40);  
+    tank.setLeftMotorPWM(-40);
+    tank.setRightMotorPWM(40);  
     }
     enes.updateLocation();
     enes.retrieveDestination();
@@ -104,7 +107,6 @@ void missionSite(){
       break;
     }
   }
-    enes.print("done");
 
   
   
