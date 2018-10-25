@@ -33,23 +33,22 @@ void loop() {
    *The method missionSite() will perform to determine the OSV location in comparison to mission  *
    ***********************************************************************************************/
 while(enes.readDistanceSensor(1) < 0.5 || enes.readDistanceSensor(0) < 0.5 || enes.readDistanceSensor(2) < 0.5){
-
-  
-   enes.println("Found Obstacle");
+  enes.println("Found Obstacle");
   tank.setLeftMotorPWM(-255);
   tank.setRightMotorPWM(-255);
-  delay(300);
+  delay(400);
   tank.setLeftMotorPWM(0);
-   tank.setRightMotorPWM(0);
-   enes.updateLocation();
+  tank.setRightMotorPWM(0);
+  enes.updateLocation();
    if(enes.location.y <= 1.5){
      tank.setLeftMotorPWM(-255);
   tank.setRightMotorPWM(255);
   delay(700);
-   } if(enes.location.y > 1.5){
+   } 
+   if(enes.location.y > 1.5){
     tank.setLeftMotorPWM(255);
-  tank.setRightMotorPWM(-255);
-  delay(700);
+    tank.setRightMotorPWM(-255);
+    delay(700);
    }
   
 
@@ -65,6 +64,7 @@ while(enes.readDistanceSensor(1) < 0.5 || enes.readDistanceSensor(0) < 0.5 || en
   }
   
 }
+
 void missionSite(){
   enes.updateLocation();
   enes.retrieveDestination();
@@ -78,8 +78,14 @@ void missionSite(){
   float deltX = (destinationX - currentX);
   float destinationTheta = atan(deltY/ deltX) * 100 / 100;
   while(destinationTheta != currentTheta){
+    if(destinationTheta>=0){
+    tank.setLeftMotorPWM(-40);
+    tank.setRightMotorPWM(40);
+    }
+    if(destinationTheta<0){
     tank.setLeftMotorPWM(40);
-    tank.setRightMotorPWM(-40);
+    tank.setRightMotorPWM(-40);  
+    }
     enes.updateLocation();
     enes.retrieveDestination();
     destinationX = enes.destination.x;
