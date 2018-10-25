@@ -10,24 +10,15 @@ DFRTankSimulation tank;
 
   
 void setup() {
-
   tank.init();
-
-
   enes.println("Starting Navigation");
-
   while (!enes.retrieveDestination());
-
   while (!enes.updateLocation());
-
 }
 
 void loop() {
   int j = false;
-  enes.print( enes.destination.x);
   //turn to face forward
-
-
   missionSite();
   //move forward
   tank.setLeftMotorPWM(255);
@@ -55,15 +46,18 @@ while(j){
   tank.setLeftMotorPWM(255);
   tank.setRightMotorPWM(255);
   if(j){
-    j = false;
+  j = false;
   delay(3200);
   while (!enes.retrieveDestination());
-
   while (!enes.updateLocation());
-  
   missionSite();
   }
 }
+  if(enes.location.x==enes.destination.x && enes.location.y==enes.destination.y){
+    tank.setLeftMotorPWM(0);
+    tank.setRightMotorPWM(0);
+  }
+  
 }
 void locUpdate(){
   while (abs(enes.location.theta) > 0.02) {
@@ -78,27 +72,35 @@ void missionSite(){
   enes.retrieveDestination();
   float currentX = enes.location.x;
   float currentY = enes.location.y;
-  float currentTheta = enes.location.theta;
+  float currentTheta = floorf(enes.location.theta*100)/100;
   float destinationX = enes.destination.x;
   float destinationY = enes.destination.y;
-
-  float EPSILON = 0.111;
+  float EPSILON = 0.01;
   float deltY = (destinationY - currentY);
   float deltX = (destinationX - currentX);
-
-  float destinationTheta = atan(deltY / deltX);
- /* enes.println(currentX);
-  enes.println(currentY);
-  enes.println(destinationX);
-  enes.println(destinationY);
-  enes.println(destinationTheta);
-  */
-  while(destinationTheta != currentTheta || abs(destinationTheta - currentTheta) < EPSILON){
-    tank.setLeftMotorPWM(255);
-    tank.setRightMotorPWM(-255);
-      //UPDATE
-    
+  float destinationTheta = floorf(atan(deltY/ deltX) * 100) / 100;
+  while(destinationTheta != currentTheta){
+    tank.setLeftMotorPWM(30);
+    tank.setRightMotorPWM(-30);
+    enes.updateLocation();
+    enes.retrieveDestination();
+    destinationX = enes.destination.x;
+    destinationY = enes.destination.y;
+    currentX = enes.location.x;
+    currentY = enes.location.y;
+    deltY = (destinationY - currentY);
+    deltX = (destinationX - currentX);
+    currentTheta = floorf(enes.location.theta*100)/100;
+    destinationTheta = floorf(atan(deltY/ deltX) * 100) / 100;
+    enes.println("");
+    enes.print(destinationTheta);
+    enes.print("     ");
+    enes.print(currentTheta);
+    /*if(currentTheta<=destinationTheta+EPSILON && currentTheta>=destinationTheta-EPSILON){
+      break;
+    }*/
   }
+    enes.print("done");
 
   
   
