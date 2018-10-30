@@ -6,7 +6,7 @@
 Enes100Simulation enes;
 DFRTankSimulation tank;
 
-int locError=.5;
+float locError=.30;
 
 
 void setup() {
@@ -19,7 +19,7 @@ void setup() {
 
 void loop() {
 
-
+  distance();
   //move forward
   driveForward(0);
 
@@ -46,10 +46,14 @@ void loop() {
     missionSite();
   }
 
-  if (enes.location.x >= enes.destination.x-locError  && (enes.location.y <= enes.destination.y+locError||enes.location.y >= enes.destination.y-locError)) {
+  /*if (enes.location.x >= enes.destination.x-locError  && (enes.location.y <= enes.destination.y+locError||enes.location.y >= enes.destination.y-locError)) {
     tank.setLeftMotorPWM(0);
     tank.setRightMotorPWM(0);
     enes.print("done");
+  }*/
+  if(distance()<=locError){
+    missionSite();
+    stopMotors(300);
   }
 }
 
@@ -155,6 +159,20 @@ void stopMotors(float t){
   tank.setLeftMotorPWM(0);
   tank.setRightMotorPWM(0);
   delay(t*1000);
+}
+
+float distance(){
+  enes.updateLocation();
+  enes.retrieveDestination();
+  float currentX = enes.location.x;
+  float currentY = enes.location.y;
+  float destinationX = enes.destination.x;
+  float destinationY = enes.destination.y;
+  float deltY = (destinationY - currentY);
+  float deltX = (destinationX - currentX);
+  float distance=sqrt(pow(deltY, 2)+pow(deltX, 2));
+  enes.println(distance);
+  return distance;
 }
 
 
