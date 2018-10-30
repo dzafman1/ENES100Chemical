@@ -98,22 +98,22 @@ void missionSite() {
     }
     else if(destinationTheta<=0&&currentTheta>=0){
       if(abs(destinationTheta-currentTheta)<=3.14){
-        tank.setLeftMotorPWM(-40);
-        tank.setRightMotorPWM(40);
-      }
-      else{
-        tank.setLeftMotorPWM(40);
-        tank.setRightMotorPWM(-40);  
-      }
-    }
-    else if(destinationTheta>=0&&currentTheta<=0){
-      if(abs(destinationTheta-currentTheta)<=3.14){
         tank.setLeftMotorPWM(40);
         tank.setRightMotorPWM(-40);
       }
       else{
         tank.setLeftMotorPWM(-40);
         tank.setRightMotorPWM(40);  
+      }
+    }
+    else if(destinationTheta>=0&&currentTheta<=0){
+      if(abs(destinationTheta-currentTheta)<=3.14){
+        tank.setLeftMotorPWM(-40);
+        tank.setRightMotorPWM(40);
+      }
+      else{
+        tank.setLeftMotorPWM(40);
+        tank.setRightMotorPWM(-40);  
       }
     }
     enes.println("");
