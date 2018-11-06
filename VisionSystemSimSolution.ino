@@ -137,17 +137,29 @@ void driveForward(float t){
   delay(t*1000);
 }
 
+//Turns left a certain angle
 void turnLeft(float t){
+  float turnAngle=.5;
+  while(enes.location.theta<t+turnAngle){
+  enes.updateLocation();
+  enes.retrieveDestination();
   tank.setLeftMotorPWM(-255);
   tank.setRightMotorPWM(255);
-  delay(t*1000);
-}
-
+  }
+  }
+ 
+//Turns right a certain angle
 void turnRight(float t){
+  float turnAngle=.5;
+  while(enes.location.theta>t-turnAngle){
+  enes.updateLocation();
+  enes.retrieveDestination();
   tank.setLeftMotorPWM(255);
   tank.setRightMotorPWM(-255);
-  delay(t*1000);
-}
+  }
+  }
+ 
+
 
 void driveBackward(float t){
   tank.setLeftMotorPWM(-255);
