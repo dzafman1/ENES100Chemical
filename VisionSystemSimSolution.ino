@@ -7,7 +7,8 @@ Enes100Simulation enes;
 DFRTankSimulation tank;
 
 float locError=.30;
-
+boolean stuck;
+int stuckInLoop = 0; 
 
 void setup() {
   tank.init();
@@ -19,9 +20,10 @@ void setup() {
 
 void loop() {
 
-  distance();
+  distanceToMission();
   //move forward
-  driveForward(0);
+  driveForward(.3, enes.location.x, enes.location.y, enes.location.theta);
+  missionSite();
 
 
   /************************************************************************************************
@@ -31,27 +33,29 @@ void loop() {
     it will turn to the left. The OSV will then move forward in that direction for 1.5 seconds.
     The method missionSite() will perform to determine the OSV location in comparison to mission
    ***********************************************************************************************/
-  while (enes.readDistanceSensor(1) < 0.5 || enes.readDistanceSensor(0) < 0.5 || enes.readDistanceSensor(2) < 0.5) {
+  while(enes.readDistanceSensor(1) < 0.45 || enes.readDistanceSensor(0) < 0.45 || enes.readDistanceSensor(2) < 0.45) {
+    enes.updateLocation();
     enes.println("Found Obstacle");
-    driveBackward(.4);
+    driveBackward(.2, enes.location.x, enes.location.y, enes.location.theta);
     stopMotors(0);
     enes.updateLocation();
     if (enes.location.y <= 1.2) {
-      turnLeft(.7);
+      turnLeft(enes.location.theta);
     }
     if (enes.location.y > 1.2) {
-      turnRight(.7);
+      turnRight(enes.location.theta);
     }
-    driveForward(2);
+    stuck=driveForward(.4, enes.location.x, enes.location.y, enes.location.theta);
+    if(stuck==false){
+      stuckInLoop++;
+    }
+    if(stuckInLoop==3){
+      delay(10000);
+    }
     missionSite();
   }
 
-  /*if (enes.location.x >= enes.destination.x-locError  && (enes.location.y <= enes.destination.y+locError||enes.location.y >= enes.destination.y-locError)) {
-    tank.setLeftMotorPWM(0);
-    tank.setRightMotorPWM(0);
-    enes.print("done");
-  }*/
-  if(distance()<=locError){
+  if(distanceToMission()<=locError){
     missionSite();
     stopMotors(300);
   }
@@ -120,37 +124,57 @@ void missionSite() {
         tank.setRightMotorPWM(-40);  
       }
     }
-    enes.println("");
-    enes.print(destinationTheta);
-    enes.print("     ");
-    enes.print(currentTheta);
     if (currentTheta <= destinationTheta + EPSILON && currentTheta >= destinationTheta - EPSILON) {
-      break;
+      break; 
     }
   }
-  enes.print("done");
 }
 
-void driveForward(float t){
+boolean driveForward(float d, float x, float y, float t){
+  float destX = x+(d*cos(abs(t)));
+  float destY;
+  if(t>0){
+  destY=y+(d*sin(abs(t)));
+  enes.updateLocation();
+  while((enes.location.x<destX)&&(enes.location.y<destY)&&(enes.readDistanceSensor(1) > 0.45 && enes.readDistanceSensor(0) > 0.45 && enes.readDistanceSensor(2) > 0.45)&&distanceToMission()>=locError){
+    enes.updateLocation();
+    enes.retrieveDestination();
+    tank.setLeftMotorPWM(255);
+    tank.setRightMotorPWM(255);
+    if((enes.readDistanceSensor(1) <= 0.45 && enes.readDistanceSensor(0) <= 0.45 && enes.readDistanceSensor(2) <= 0.45)){
+      return false;
+    }
+    }
+  }
+  if(t<=0){
+  destY=y-(d*sin(abs(t)));
+  while((enes.location.x<destX)&&(enes.location.y>destY)&&(enes.readDistanceSensor(1) > 0.45 && enes.readDistanceSensor(0) > 0.45 && enes.readDistanceSensor(2) > 0.45)&&distanceToMission()>=locError){
+  enes.updateLocation();
+  enes.retrieveDestination();
   tank.setLeftMotorPWM(255);
   tank.setRightMotorPWM(255);
-  delay(t*1000);
+  if((enes.readDistanceSensor(1) <= 0.45 && enes.readDistanceSensor(0) <= 0.45 && enes.readDistanceSensor(2) <= 0.45)){
+      return false;
+    }
+  }
+  }
+  return true;
 }
 
 //Turns left a certain angle
 void turnLeft(float t){
-  float turnAngle=.5;
+  float turnAngle=.4;
   while(enes.location.theta<t+turnAngle){
   enes.updateLocation();
   enes.retrieveDestination();
   tank.setLeftMotorPWM(-255);
   tank.setRightMotorPWM(255);
   }
-  }
+ }
  
 //Turns right a certain angle
 void turnRight(float t){
-  float turnAngle=.5;
+  float turnAngle=.4;
   while(enes.location.theta>t-turnAngle){
   enes.updateLocation();
   enes.retrieveDestination();
@@ -160,11 +184,28 @@ void turnRight(float t){
   }
  
 
-
-void driveBackward(float t){
+void driveBackward(float d, float x, float y, float t){
+  float backwardsX = x-(d*cos(abs(t)));
+  float backwardsY;
+  if(t>0){
+  backwardsY=y-(d*sin(abs(t)));
+  enes.updateLocation();
+  while((enes.location.x>backwardsX)&&(enes.location.y>backwardsY)){
+    enes.updateLocation();
+    enes.retrieveDestination();
+    tank.setLeftMotorPWM(-255);
+    tank.setRightMotorPWM(-255);
+    }
+  }
+  else if(t<=0){
+  backwardsY=y+(d*sin(abs(t)));
+  while((enes.location.x>backwardsX)&&(enes.location.y<backwardsY)){
+  enes.updateLocation();
+  enes.retrieveDestination();
   tank.setLeftMotorPWM(-255);
-  tank.setRightMotorPWM(-255);
-  delay(t*1000);
+  tank.setRightMotorPWM(-255);  
+  }
+  }
 }
 
 void stopMotors(float t){
@@ -173,7 +214,7 @@ void stopMotors(float t){
   delay(t*1000);
 }
 
-float distance(){
+float distanceToMission(){
   enes.updateLocation();
   enes.retrieveDestination();
   float currentX = enes.location.x;
@@ -183,8 +224,5 @@ float distance(){
   float deltY = (destinationY - currentY);
   float deltX = (destinationX - currentX);
   float distance=sqrt(pow(deltY, 2)+pow(deltX, 2));
-  enes.println(distance);
   return distance;
 }
-
-
