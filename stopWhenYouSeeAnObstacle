@@ -1,0 +1,54 @@
+// motor one (L)
+int enA = 10;
+int in1 = 12;
+int in2 = 8;
+
+// motor two (R)
+int enB = 5;
+int in3 = 7;
+int in4 = 4;
+
+// IR sensor
+int irSensorPin = A1;
+
+boolean obstacle = false;
+
+void setup() {
+  pinMode(irSensorPin, INPUT);
+  pinMode(enA, OUTPUT);
+  pinMode(enB, OUTPUT);
+  pinMode(in1, OUTPUT);
+  pinMode(in2, OUTPUT);
+  pinMode(in3, OUTPUT);
+  pinMode(in4, OUTPUT);
+}
+
+
+// boolean for obstacle detection. Returns false if no obstacle found by sensor. Returns true if obstacle is found
+boolean foundObstacle() {
+  int obstacleReading = digitalRead(irSensorPin);
+  if (obstacleReading == LOW) {
+    return true;
+  }
+  else {
+    return false;
+  }
+}
+
+void loop() {
+ delay(2000);
+ do {
+    obstacle = foundObstacle();
+    digitalWrite(in1, HIGH);
+    digitalWrite(in2, LOW);
+    digitalWrite(in3, HIGH);
+    digitalWrite(in4, LOW);
+  } while (obstacle == false);
+  if (obstacle == true) {
+    digitalWrite(in1, LOW);
+    digitalWrite(in2, LOW);
+    digitalWrite(in3, LOW);
+    digitalWrite(in4, LOW);
+    delay(20000);
+  }
+}
