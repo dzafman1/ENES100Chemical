@@ -22,9 +22,6 @@ int irSensorPin = A1;
 boolean obstacle = false;
 
 float locError=.30;
-boolean stuck;
-int stuckInLoop = 0; 
-
 
 void setup() {
   tank.init();
@@ -49,7 +46,11 @@ void setup() {
    ***********************************************************************************************/
 
 void loop() {
-  //calculate distance to destination
+navigation();
+}
+
+void navigation(){
+ //calculate distance to destination
   distanceToMission();
   //move forward
   driveForward(.3, enes.location.x, enes.location.y, enes.location.theta);
@@ -68,20 +69,16 @@ void loop() {
     if (enes.location.y > 1.2) {
       turnRight(enes.location.theta);
     }
-    stuck=driveForward(.4, enes.location.x, enes.location.y, enes.location.theta);
-    if(stuck==false){
-      stuckInLoop++;
-    }
-    if(stuckInLoop==3){
-      delay(10000);
-    }
+    driveForward(.4, enes.location.x, enes.location.y, enes.location.theta);
     missionSite();
   }
 
   if(distanceToMission()<=locError){
+    missionSite();
     enes.navigated();
     stopMotors(300);
   }
+}
 }
 
 void missionSite() {
