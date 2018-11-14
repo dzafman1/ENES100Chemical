@@ -6,6 +6,11 @@
 Enes100Simulation enes;
 DFRTankSimulation tank;
 
+// RF Communication
+int markerID = 9;
+int aSerialRecieve = 6;
+int aSerialTransmit = 2 ;
+
 // motor one (L)
 int enA = 10;
 int in1 = 12;
@@ -18,10 +23,10 @@ int in4 = 4;
 
 // IR sensor
 int irSensorPin = A1;
-
 boolean obstacle = false;
 
 float locError=.30;
+Enes100 enes("Heisenburg", CHEMICAL, markerID, aSerialRecieve, aSerialTransmit);
 
 void setup() {
   tank.init();
