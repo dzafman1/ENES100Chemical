@@ -46,6 +46,8 @@ void setup() {
    ***********************************************************************************************/
 
 void loop() {
+  analogWrite(enA, 255);
+  analogWrite(enB, 255);
   if(navigation()==false){
   navigation();
   }
@@ -112,42 +114,61 @@ void missionSite() {
     destinationTheta = atan(deltY / deltX) * 100 / 100;
     if(destinationTheta<=0&&currentTheta<=0){
       if (abs(destinationTheta) <= abs(currentTheta)) {
-      tank.setLeftMotorPWM(-40);
-      tank.setRightMotorPWM(40);
+      digitalWrite(in1, LOW);
+      digitalWrite(in2, HIGH);
+      digitalWrite(in3, HIGH);
+      digitalWrite(in4, LOW);
     }
       else{
-      tank.setLeftMotorPWM(40);
-      tank.setRightMotorPWM(-40);  
+        //turn right
+        digitalWrite(in1, HIGH);
+        digitalWrite(in2, LOW);
+        digitalWrite(in3, LOW);
+        digitalWrite(in4, HIGH); 
       }
     }
+   
     else if(destinationTheta>0&&currentTheta>0){
       if (destinationTheta <= currentTheta) {
-      tank.setLeftMotorPWM(40);
-      tank.setRightMotorPWM(-40);
+        digitalWrite(in1, HIGH);
+        digitalWrite(in2, LOW);
+        digitalWrite(in3, LOW);
+        digitalWrite(in4, HIGH);
     }
       else{
-      tank.setLeftMotorPWM(-40);
-      tank.setRightMotorPWM(40);  
+      digitalWrite(in1, LOW);
+      digitalWrite(in2, HIGH);
+      digitalWrite(in3, HIGH);
+      digitalWrite(in4, LOW); 
       }
     }
     else if(destinationTheta<=0&&currentTheta>=0){
       if(abs(destinationTheta-currentTheta)<=3.14){
-        tank.setLeftMotorPWM(40);
-        tank.setRightMotorPWM(-40);
+        //turn right
+          digitalWrite(in1, HIGH);
+          digitalWrite(in2, LOW);
+          digitalWrite(in3, LOW);
+          digitalWrite(in4, HIGH);
       }
       else{
-        tank.setLeftMotorPWM(-40);
-        tank.setRightMotorPWM(40);  
+        digitalWrite(in1, LOW);
+        digitalWrite(in2, HIGH);
+        digitalWrite(in3, HIGH);
+        digitalWrite(in4, LOW); 
       }
     }
     else if(destinationTheta>=0&&currentTheta<=0){
       if(abs(destinationTheta-currentTheta)<=3.14){
-        tank.setLeftMotorPWM(-40);
-        tank.setRightMotorPWM(40);
+        digitalWrite(in1, LOW);
+        digitalWrite(in2, HIGH);
+        digitalWrite(in3, HIGH);
+        digitalWrite(in4, LOW);
       }
       else{
-        tank.setLeftMotorPWM(40);
-        tank.setRightMotorPWM(-40);  
+          digitalWrite(in1, HIGH);
+          digitalWrite(in2, LOW);
+          digitalWrite(in3, LOW);
+          digitalWrite(in4, HIGH); 
       }
     }
     if (currentTheta <= destinationTheta + EPSILON && currentTheta >= destinationTheta - EPSILON) {
@@ -166,8 +187,10 @@ boolean driveForward(float d, float x, float y, float t){
   while((enes.location.x<destX)&&(enes.location.y<destY)&&(enes.readDistanceSensor(1) > 0.45 && enes.readDistanceSensor(0) > 0.45 && enes.readDistanceSensor(2) > 0.45)&&distanceToMission()>=locError){
     enes.updateLocation();
     enes.retrieveDestination();
-    tank.setLeftMotorPWM(255);
-    tank.setRightMotorPWM(255);
+    digitalWrite(in1, HIGH);
+    digitalWrite(in2, HIGH);
+    digitalWrite(in3, HIGH);
+    digitalWrite(in4, HIGH);
     if((enes.readDistanceSensor(1) <= 0.45 && enes.readDistanceSensor(0) <= 0.45 && enes.readDistanceSensor(2) <= 0.45)){
       return false;
     }
@@ -178,8 +201,10 @@ boolean driveForward(float d, float x, float y, float t){
   while((enes.location.x<destX)&&(enes.location.y>destY)&&(enes.readDistanceSensor(1) > 0.45 && enes.readDistanceSensor(0) > 0.45 && enes.readDistanceSensor(2) > 0.45)&&distanceToMission()>=locError){
   enes.updateLocation();
   enes.retrieveDestination();
-  tank.setLeftMotorPWM(255);
-  tank.setRightMotorPWM(255);
+  digitalWrite(in1, HIGH);
+  digitalWrite(in2, HIGH);
+  digitalWrite(in3, HIGH);
+  digitalWrite(in4, HIGH);
   if((enes.readDistanceSensor(1) <= 0.45 && enes.readDistanceSensor(0) <= 0.45 && enes.readDistanceSensor(2) <= 0.45)){
       return false;
     }
@@ -194,8 +219,10 @@ void turnLeft(float t){
   while(enes.location.theta<t+turnAngle){
   enes.updateLocation();
   enes.retrieveDestination();
-  tank.setLeftMotorPWM(-255);
-  tank.setRightMotorPWM(255);
+  digitalWrite(in1, LOW);
+  digitalWrite(in2, HIGH);
+  digitalWrite(in3, HIGH);
+  digitalWrite(in4, LOW);
   }
  }
  
@@ -205,8 +232,10 @@ void turnRight(float t){
   while(enes.location.theta>t-turnAngle){
   enes.updateLocation();
   enes.retrieveDestination();
-  tank.setLeftMotorPWM(255);
-  tank.setRightMotorPWM(-255);
+  digitalWrite(in1, HIGH);
+  digitalWrite(in2, LOW);
+  digitalWrite(in3, LOW);
+  digitalWrite(in4, HIGH);
   }
   }
  
@@ -220,24 +249,38 @@ void driveBackward(float d, float x, float y, float t){
   while((enes.location.x>backwardsX)&&(enes.location.y>backwardsY)){
     enes.updateLocation();
     enes.retrieveDestination();
-    tank.setLeftMotorPWM(-255);
-    tank.setRightMotorPWM(-255);
+    analogWrite(enA, -255);
+    analogWrite(enB, -255);
+    digitalWrite(in1, HIGH);
+    digitalWrite(in2, HIGH);
+    digitalWrite(in3, HIGH);
+    digitalWrite(in4, HIGH);
     }
+  analogWrite(enA, 255);
+  analogWrite(enB, 255);
   }
   else if(t<=0){
   backwardsY=y+(d*sin(abs(t)));
   while((enes.location.x>backwardsX)&&(enes.location.y<backwardsY)){
   enes.updateLocation();
   enes.retrieveDestination();
-  tank.setLeftMotorPWM(-255);
-  tank.setRightMotorPWM(-255);  
+    analogWrite(enA, -255);
+    analogWrite(enB, -255);
+    digitalWrite(in1, HIGH);
+    digitalWrite(in2, HIGH);
+    digitalWrite(in3, HIGH);
+    digitalWrite(in4, HIGH);
   }
+  analogWrite(enA, 255);
+  analogWrite(enB, 255);
   }
 }
 
 void stopMotors(float t){
-  tank.setLeftMotorPWM(0);
-  tank.setRightMotorPWM(0);
+  digitalWrite(in1, LOW);
+  digitalWrite(in2, LOW);
+  digitalWrite(in3, LOW);
+  digitalWrite(in4, LOW);
   delay(t*1000);
 }
 
@@ -263,4 +306,5 @@ boolean foundObstacle() {
     return false;
   }
 }
+
 
