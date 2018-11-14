@@ -46,10 +46,14 @@ void setup() {
    ***********************************************************************************************/
 
 void loop() {
-navigation();
+  if(navigation()==false){
+  navigation();
+  }
+  
 }
 
-void navigation(){
+boolean navigation(){
+  boolean navigated=false;
  //calculate distance to destination
   distanceToMission();
   //move forward
@@ -75,10 +79,12 @@ void navigation(){
 
   if(distanceToMission()<=locError){
     missionSite();
+    navigated=true;
     enes.navigated();
-    stopMotors(300);
+    
   }
 }
+  return navigated;
 }
 
 void missionSite() {
