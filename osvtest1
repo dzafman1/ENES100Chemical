@@ -1,0 +1,173 @@
+#include "Enes100.h"
+
+// RF Communication
+int markerID = 9;
+int aSerialRecieve = 6;
+int aSerialTransmit = 2 ;
+
+// motor 1&3 are left motors
+
+// motor one (L)
+int enA = 10;
+int in1 = 12;
+int in2 = 8;
+
+// motor two (R)
+int enB = 5;
+int in3 = 7;
+int in4 = 4;
+
+Enes100 enes("Heisenburg", CHEMICAL, markerID, aSerialRecieve, aSerialTransmit);
+
+void setup() {
+  pinMode(enA, OUTPUT);
+  pinMode(enB, OUTPUT);
+  pinMode(in1, OUTPUT);
+  pinMode(in2, OUTPUT);
+  pinMode(in3, OUTPUT);
+  pinMode(in4, OUTPUT);
+  missionSite();
+
+  enes.retrieveDestination();
+  float destinationX = enes.destination.x;
+  float destinationY = enes.destination.y;
+  Coordinate destinationLocation(destinationX, destinationY);
+  
+  enes.updateLocation();
+  float currentX = enes.location.x;
+  float currentY = enes.location.y;
+  float currentTheta = enes.location.theta;
+  Coordinate currentLocation(currentX, currentY, currentTheta);
+//  String currentLocationString = "Current Location: " + currentX + ", " + currentY;
+
+  enes.print("Destination coordinate: (");
+  enes.print(destinationX);
+  enes.print(", ");
+  enes.print(destinationY);
+  enes.println(")");
+  
+  enes.print("Current location coordinate: (");
+  enes.print(currentX);
+  enes.print(", ");
+  enes.print(currentY);
+  enes.print(", ");
+  enes.print(currentTheta);
+  enes.println(")");
+  enes.println("");
+}
+
+void loop() {
+    
+}
+
+void missionSite() {
+  enes.updateLocation();
+  enes.retrieveDestination();
+  float currentX = enes.location.x;
+  float currentY = enes.location.y;
+  float currentTheta = enes.location.theta * 100 / 100;
+  float destinationX = enes.destination.x;
+  float destinationY = enes.destination.y;
+  float EPSILON = 0.15;
+  float deltY = (destinationY - currentY);
+  float deltX = (destinationX - currentX);
+  float destinationTheta = atan(deltY / deltX) * 100 / 100;
+  while (destinationTheta != currentTheta) {
+    enes.updateLocation();
+    enes.retrieveDestination();
+    destinationX = enes.destination.x;
+    destinationY = enes.destination.y;
+    currentX = enes.location.x;
+    currentY = enes.location.y;
+    deltY = (destinationY - currentY);
+    deltX = (destinationX - currentX);
+    currentTheta = enes.location.theta * 100 / 100;
+    destinationTheta = atan(deltY / deltX) * 100 / 100;
+    if(destinationTheta<=0&&currentTheta<=0){
+      if (abs(destinationTheta) <= abs(currentTheta)) {
+        analogWrite(enA, 255);
+        analogWrite(enB, 255);
+        digitalWrite(in1, LOW);
+        digitalWrite(in2, HIGH);
+        digitalWrite(in3, HIGH);
+        digitalWrite(in4, LOW);
+    }
+      else{
+        analogWrite(enA, 255);
+        analogWrite(enB, 255);
+        digitalWrite(in1, HIGH);
+        digitalWrite(in2, LOW);
+        digitalWrite(in3, LOW);
+        digitalWrite(in4, HIGH); 
+      }
+    }
+    else if(destinationTheta>0&&currentTheta>0){
+      if (destinationTheta <= currentTheta) {
+        analogWrite(enA, 255);
+        analogWrite(enB, 255);
+        digitalWrite(in1, HIGH);
+        digitalWrite(in2, LOW);
+        digitalWrite(in3, LOW);
+        digitalWrite(in4, HIGH);
+    }
+      else{
+        analogWrite(enA, 255);
+        analogWrite(enB, 255);
+        digitalWrite(in1, LOW);
+        digitalWrite(in2, HIGH);
+        digitalWrite(in3, HIGH);
+        digitalWrite(in4, LOW);
+      }
+    }
+    else if(destinationTheta<=0&&currentTheta>=0){
+      if(abs(destinationTheta-currentTheta)<=3.14){
+        analogWrite(enA, 255);
+        analogWrite(enB, 255);
+         digitalWrite(in1, HIGH);
+        digitalWrite(in2, LOW);
+        digitalWrite(in3, LOW);
+        digitalWrite(in4, HIGH);
+      }
+      else{
+        analogWrite(enA, 255);
+        analogWrite(enB, 255);
+        digitalWrite(in1, LOW);
+        digitalWrite(in2, HIGH);
+        digitalWrite(in3, HIGH);
+        digitalWrite(in4, LOW); 
+      }
+    }
+    else if(destinationTheta>=0&&currentTheta<=0){
+      if(abs(destinationTheta-currentTheta)<=3.14){
+        analogWrite(enA, 255);
+        analogWrite(enB, 255);
+        digitalWrite(in1, LOW);
+        digitalWrite(in2, HIGH);
+        digitalWrite(in3, HIGH);
+        digitalWrite(in4, LOW);
+      }
+      else{
+        analogWrite(enA, 255);
+        analogWrite(enB, 255);
+        digitalWrite(in1, HIGH);
+        digitalWrite(in2, LOW);
+        digitalWrite(in3, LOW);
+        digitalWrite(in4, HIGH); 
+      }
+    }
+    enes.println("");
+    enes.print(destinationTheta);
+    enes.print("     ");
+    enes.print(currentTheta);
+    if (currentTheta <= destinationTheta + EPSILON && currentTheta >= destinationTheta - EPSILON) {
+        analogWrite(enA, 255);
+        analogWrite(enB, 255);
+        digitalWrite(in1, LOW);
+        digitalWrite(in2, LOW);
+        digitalWrite(in3, LOW);
+        digitalWrite(in4, LOW); 
+      break;
+    }
+  }
+  enes.print("done");
+}
