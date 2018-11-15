@@ -175,6 +175,7 @@ void missionSite() {
           digitalWrite(in3, LOW);
           digitalWrite(in4, HIGH); 
       }
+      delay(100);
     }
     if (currentTheta <= destinationTheta + EPSILON && currentTheta >= destinationTheta - EPSILON) {
       break; 
