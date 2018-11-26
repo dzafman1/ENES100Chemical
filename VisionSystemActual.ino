@@ -193,9 +193,9 @@ boolean driveForward(float d, float x, float y, float t){
     enes.updateLocation();
     enes.retrieveDestination();
     digitalWrite(in1, HIGH);
-    digitalWrite(in2, HIGH);
+    digitalWrite(in2, LOW);
     digitalWrite(in3, HIGH);
-    digitalWrite(in4, HIGH);
+    digitalWrite(in4, LOW);
     if((enes.readDistanceSensor(1) <= 0.45 && enes.readDistanceSensor(0) <= 0.45 && enes.readDistanceSensor(2) <= 0.45)){
       return false;
     }
@@ -207,9 +207,9 @@ boolean driveForward(float d, float x, float y, float t){
   enes.updateLocation();
   enes.retrieveDestination();
   digitalWrite(in1, HIGH);
-  digitalWrite(in2, HIGH);
+  digitalWrite(in2, LOW);
   digitalWrite(in3, HIGH);
-  digitalWrite(in4, HIGH);
+  digitalWrite(in4, LOW);
   if((enes.readDistanceSensor(1) <= 0.45 && enes.readDistanceSensor(0) <= 0.45 && enes.readDistanceSensor(2) <= 0.45)){
       return false;
     }
@@ -257,9 +257,9 @@ void driveBackward(float d, float x, float y, float t){
     analogWrite(enA, -255);
     analogWrite(enB, -255);
     digitalWrite(in1, HIGH);
-    digitalWrite(in2, HIGH);
+    digitalWrite(in2, LOW);
     digitalWrite(in3, HIGH);
-    digitalWrite(in4, HIGH);
+    digitalWrite(in4, LOW);
     }
   analogWrite(enA, 255);
   analogWrite(enB, 255);
@@ -272,9 +272,9 @@ void driveBackward(float d, float x, float y, float t){
     analogWrite(enA, -255);
     analogWrite(enB, -255);
     digitalWrite(in1, HIGH);
-    digitalWrite(in2, HIGH);
+    digitalWrite(in2, LOW);
     digitalWrite(in3, HIGH);
-    digitalWrite(in4, HIGH);
+    digitalWrite(in4, LOW);
   }
   analogWrite(enA, 255);
   analogWrite(enB, 255);
