@@ -4,7 +4,7 @@
 #define abs(x) ((x)>0?(x):-(x))
 
 // RF Communication
-int markerID = 7; // change every time we get a marker
+int markerID = 10 ; // change every time we get a marker
 int aSerialRecieve = 6;
 int aSerialTransmit = 2 ;
 
@@ -95,8 +95,11 @@ void loop() {
   analogWrite(enB, 255);
   while(navigation()==false){
   }
+  analogWrite(enA, 0);
+  analogWrite(enB, 0);
   /*
   lowerpHSensor(); //void function that runs once
+  delay(10000);
   while(initalpH()==false){
   }
   collectWater();
@@ -373,15 +376,10 @@ float distanceToMission(){
 // *************************FOUND OBSTACLE************************************
 boolean foundObstacle() {
     enes.updateLocation();
-    if((enes.location.x > 1)&&(enes.location.x < 3)) {
-      int sensorVal = analogRead(irSensorPin);
+    int sensorVal = analogRead(irSensorPin);
     enes.println(sensorVal);
-    if(sensorVal > 250 ) {
+    if(sensorVal > 350 ) {
       return true;
-    }
-    else {
-      return false;
-    }
     }
     else {
       return false;
@@ -397,6 +395,12 @@ boolean navigation(){
   distanceToMission();
   //move forward
   boolean obstacle = true;
+  if(distanceToMission()<=locError){
+    missionSite();
+    enes.println("NAVIGATION COMPLETE");
+    enes.navigated();
+    return true;
+  }
   while(obstacle){
     enes.println("in obstacle loop");
     distanceToMission();
@@ -405,10 +409,10 @@ boolean navigation(){
   }
   enes.println("drove forward");
   //obstacle is detected
-  if(foundObstacle()) {
+  if(foundObstacle()&&(enes.location.x<=3)&&(enes.location.x>1.3)){
     enes.updateLocation();
     enes.println("Found Obstacle");
-    driveBackward(.45, enes.location.x, enes.location.y, enes.location.theta);
+    driveBackward(.35, enes.location.x, enes.location.y, enes.location.theta);
     stopMotors(0);
     enes.updateLocation();
     if (enes.location.y <= 1.2) {
@@ -419,16 +423,8 @@ boolean navigation(){
       enes.println("turning right");
       turnRight(enes.location.theta);
     }
-    stopMotors(10);
     driveForward(.4, enes.location.x, enes.location.y, enes.location.theta);
     missionSite();
-  }
-
-  if(distanceToMission()<=locError){
-    missionSite();
-    navigated=true;
-    enes.navigated();
-    
   }
   return navigated;
 }
@@ -436,10 +432,11 @@ boolean navigation(){
 
 
 // *************************INITIALPH************************************
-void initialpH(){
+boolean initialpH(){
 static unsigned long samplingTime = millis();
 static unsigned long printTime = millis();
 static float pHValue,voltage;
+int counter;
 if(millis()-samplingTime > samplingInterval)
 {
 pHArray[pHArrayIndex++]=analogRead(SensorPin);
@@ -450,13 +447,17 @@ samplingTime=millis();
 }
 if(millis() - printTime > printInterval) //Every 800 milliseconds, print a numerical, convert the state of the LED indicator
 {
-enes.print("Voltage:");
-enes.print(voltage);
 enes.print(" pH value: ");
 enes.println(pHValue);
+counter++;
 digitalWrite(LED,digitalRead(LED)^1);
 printTime=millis();
+if(counter>=10){
+  enes.baseObjective(pHValue);
+  return true;
 }
+}
+return false;
 }
 
 double avergearray(int* arr, int number){
@@ -499,5 +500,3 @@ avg = (double)amount/(number-2);
 }//if
 return avg;
 }
-
-
