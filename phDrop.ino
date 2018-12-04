@@ -21,19 +21,20 @@ Enes100 enes("Heisenburg", CHEMICAL, markerID, aSerialRecieve, aSerialTransmit);
 
 // cupMotor (L)
 int enA = 11;
-int in1 = 3;
-int in2 = 0;
+int in1 = 0;
+int in2 = 1;
 
 // phMotor (R)
 int enB = 9;
-int in3 = 1;
-int in4 = 2;
+int in3 = 2;
+int in4 = 3;
 
 Adafruit_MCP23008 mcp;
 
 
 void setup()
 {
+  Serial.begin(9600);
   mcp.begin();
   pinMode(enA, OUTPUT);
   pinMode(enB, OUTPUT);
@@ -48,18 +49,12 @@ void loop()
 {
   analogWrite(enA, 100);
   analogWrite(enB, 100);
-  mcp.digitalWrite(in1, LOW);
-  mcp.digitalWrite(in2, HIGH);
-  delay(3000);
-
-  mcp.digitalWrite(in1, HIGH);
-  mcp.digitalWrite(in2, LOW);
   delay(3000);
   
-  mcp.digitalWrite(in1, HIGH);
-  mcp.digitalWrite(in2, LOW);
-  mcp.digitalWrite(in3, HIGH);
-  mcp.digitalWrite(in4, LOW);
+  mcp.digitalWrite(in1, LOW);
+  mcp.digitalWrite(in2, HIGH);
+  mcp.digitalWrite(in3, LOW);
+  mcp.digitalWrite(in4, HIGH);
 
   delay(3000);
   
@@ -67,7 +62,7 @@ void loop()
   mcp.digitalWrite(in2, LOW);
   mcp.digitalWrite(in3, LOW);
   mcp.digitalWrite(in4, LOW);
-
+  
   while(true){
     initialpH();
   }
