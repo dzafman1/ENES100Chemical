@@ -1,0 +1,543 @@
+#include <Adafruit_MCP23008.h>
+#include "Enes100.h"
+
+#define abs(x) ((x)>0?(x):-(x))
+
+// RF Communication
+int markerID = 14 ; // change every time we get a marker
+int aSerialRecieve = 6;
+int aSerialTransmit = 2 ;
+
+// motor one (L)
+int enA = 10;
+int in1 = 12;
+int in2 = 8;
+
+// motor two (R)
+int enB = 5;
+int in3 = 7;
+int in4 = 4;
+
+// IR sensor
+int irSensorPin = A2;
+boolean obstacle = false;
+
+//pH sensor
+#define SensorPin A0 //pH meter Analog output to Arduino Analog Input 0
+#define Offset 0.12 //deviation compensate
+#define LED 13
+#define samplingInterval 20
+#define printInterval 800
+#define ArrayLenth 40 //times of collection
+int pHArray[ArrayLenth]; //Store the average value of the sensor feedback
+int pHArrayIndex=0;
+
+// cupMotor (L)
+int enA1 = 11;
+int in5 = 0;
+int in6 = 1;
+
+// phMotor (R)
+int enB1 = 9;
+int in7 = 2;
+int in8 = 3;
+
+Adafruit_MCP23008 mcp;
+
+float locError=.50;
+
+Enes100 enes("Heisenburg", CHEMICAL, markerID, aSerialRecieve, aSerialTransmit);
+
+// *************************SETUP************************************
+
+void setup() {
+  pinMode(irSensorPin, INPUT);
+  pinMode(enA, OUTPUT);
+  pinMode(enB, OUTPUT);
+  pinMode(in1, OUTPUT);
+  pinMode(in2, OUTPUT);
+  pinMode(in3, OUTPUT);
+  pinMode(in4, OUTPUT);
+  mcp.begin();
+  pinMode(enA1, OUTPUT);
+  pinMode(enB1, OUTPUT);
+  mcp.pinMode(in5, OUTPUT);
+  mcp.pinMode(in6, OUTPUT);
+  mcp.pinMode(in7, OUTPUT);
+  mcp.pinMode(in8, OUTPUT);
+
+  pinMode(LED,OUTPUT); //pH Sensor
+  
+  while (!enes.retrieveDestination());
+  while (!enes.updateLocation());
+  enes.print("Destination coordinate: (");
+  enes.print(enes.destination.x);
+  enes.print(", ");
+  enes.print(enes.destination.y);
+  enes.println(")");
+  
+  enes.print("Current location coordinate: (");
+  enes.print(enes.location.x);
+  enes.print(", ");
+  enes.print(enes.location.y);
+  enes.print(", ");
+  enes.print(enes.location.theta);
+  enes.println(")");
+  enes.println("");
+  missionSite();
+  distanceToMission();
+  obstacle = driveForward(1.1, enes.location.x, enes.location.y, enes.location.theta);
+  
+}
+
+ /************************************************************************************************
+    If the distance sensor detects an obstacle, first the OSV will move backwards for 0.2 meters.
+    Next, the OSV will decide whether to turn right or left based on its current location.
+    If the OSV is above 1.2 Meters, it will turn to the right. If the OSV is 1.2 meters or below,
+    it will turn to the left. The OSV will then move forward in that direction for 0.4 meters.
+    The method missionSite() will perform to determine the OSV location in comparison to mission
+   ***********************************************************************************************/
+
+void loop() {
+  enes.print("Current location coordinate: (");
+  enes.print(enes.location.x);
+  enes.print(", ");
+  enes.print(enes.location.y);
+  enes.print(", ");
+  enes.print(enes.location.theta);
+  enes.println(")");
+  enes.println("");
+  analogWrite(enA, 255);
+  analogWrite(enB, 255);
+  while(navigation()==false){
+  }
+  analogWrite(enA, 0);
+  analogWrite(enB, 0);
+  pHDrop();
+  while(initialpH() == false) {
+  }
+  /*
+  lowerpHSensor(); //void function that runs once
+  delay(10000);
+  while(initalpH()==false){
+  }
+  collectWater();
+  while(neutralize()==false){
+  }
+  delay(10000);
+  */
+  while(true) {
+    enes.println("code ends here");
+    delay(5000);
+  }
+}
+
+
+// *************************MISSION SITE************************************
+void missionSite() {
+  delay(100);
+  enes.updateLocation();
+  enes.retrieveDestination();
+  float currentX = enes.location.x;
+  float currentY = enes.location.y;
+  float currentTheta = enes.location.theta * 100 / 100;
+  float destinationX = enes.destination.x;
+  float destinationY = enes.destination.y;
+  float EPSILON = 0.15;
+  float deltY = (destinationY - currentY);
+  float deltX = (destinationX - currentX);
+  float destinationTheta = atan(deltY / deltX) * 100 / 100;
+  while (destinationTheta != currentTheta) {
+    enes.updateLocation();
+    enes.retrieveDestination();
+    destinationX = enes.destination.x;
+    destinationY = enes.destination.y;
+    currentX = enes.location.x;
+    currentY = enes.location.y;
+    deltY = (destinationY - currentY);
+    deltX = (destinationX - currentX);
+    currentTheta = enes.location.theta * 100 / 100;
+    destinationTheta = atan(deltY / deltX) * 100 / 100;
+    if(destinationTheta<=0&&currentTheta<=0){
+      if (abs(destinationTheta) <= abs(currentTheta)) {
+        analogWrite(enA, 255);
+        analogWrite(enB, 255);
+        digitalWrite(in1, LOW);
+        digitalWrite(in2, HIGH);
+        digitalWrite(in3, HIGH);
+        digitalWrite(in4, LOW);
+    }
+      else{
+        analogWrite(enA, 255);
+        analogWrite(enB, 255);
+        digitalWrite(in1, HIGH);
+        digitalWrite(in2, LOW);
+        digitalWrite(in3, LOW);
+        digitalWrite(in4, HIGH); 
+      }
+    }
+    else if(destinationTheta>0&&currentTheta>0){
+      if (destinationTheta <= currentTheta) {
+        analogWrite(enA, 255);
+        analogWrite(enB, 255);
+        digitalWrite(in1, HIGH);
+        digitalWrite(in2, LOW);
+        digitalWrite(in3, LOW);
+        digitalWrite(in4, HIGH);
+    }
+      else{
+        analogWrite(enA, 255);
+        analogWrite(enB, 255);
+        digitalWrite(in1, LOW);
+        digitalWrite(in2, HIGH);
+        digitalWrite(in3, HIGH);
+        digitalWrite(in4, LOW);
+      }
+    }
+    else if(destinationTheta<=0&&currentTheta>=0){
+      if(abs(destinationTheta-currentTheta)<=3.14){
+        analogWrite(enA, 255);
+        analogWrite(enB, 255);
+         digitalWrite(in1, HIGH);
+        digitalWrite(in2, LOW);
+        digitalWrite(in3, LOW);
+        digitalWrite(in4, HIGH);
+      }
+      else{
+        analogWrite(enA, 255);
+        analogWrite(enB, 255);
+        digitalWrite(in1, LOW);
+        digitalWrite(in2, HIGH);
+        digitalWrite(in3, HIGH);
+        digitalWrite(in4, LOW); 
+      }
+    }
+    else if(destinationTheta>=0&&currentTheta<=0){
+      if(abs(destinationTheta-currentTheta)<=3.14){
+        analogWrite(enA, 255);
+        analogWrite(enB, 255);
+        digitalWrite(in1, LOW);
+        digitalWrite(in2, HIGH);
+        digitalWrite(in3, HIGH);
+        digitalWrite(in4, LOW);
+      }
+      else{
+        analogWrite(enA, 255);
+        analogWrite(enB, 255);
+        digitalWrite(in1, HIGH);
+        digitalWrite(in2, LOW);
+        digitalWrite(in3, LOW);
+        digitalWrite(in4, HIGH); 
+      }
+    }
+    enes.println("");
+    enes.print(destinationTheta);
+    enes.print("     ");
+    enes.print(currentTheta);
+    if (currentTheta <= destinationTheta + EPSILON && currentTheta >= destinationTheta - EPSILON) {
+        analogWrite(enA, 255);
+        analogWrite(enB, 255);
+        digitalWrite(in1, LOW);
+        digitalWrite(in2, LOW);
+        digitalWrite(in3, LOW);
+        digitalWrite(in4, LOW); 
+      break;
+    }
+  }
+  enes.println("done");
+}
+
+
+
+
+// *************************DRIVE FORWARD************************************
+// drive forward a certain distance
+boolean driveForward(float d, float x, float y, float t){
+  float destX = x+(d*cos(abs(t)));
+  float destY;
+  if(t>0){
+  enes.println("t is  > 0");
+  destY=y+(d*sin(abs(t)));
+  enes.updateLocation();
+  enes.println(enes.location.x<destX);
+  enes.println(enes.location.y<destY);
+  enes.println(distanceToMission()>=locError);
+  while((enes.location.x<destX)&&(enes.location.y<destY)&&(distanceToMission()>=locError)){
+    enes.println("in forward loop 1");
+    digitalWrite(in1, HIGH);
+    digitalWrite(in2, LOW);
+    digitalWrite(in3, HIGH);
+    digitalWrite(in4, LOW);
+    if((foundObstacle())){
+    stopMotors(1);    
+      return false;
+    }
+    enes.println("no obstacle");
+    }
+  }
+  if(t<=0){
+  enes.println("t is  <= 0");
+  destY=y-(d*sin(abs(t)));
+  enes.println(enes.location.x<destX);
+  enes.println(enes.location.y>destY);
+  enes.println(distanceToMission()>=locError);
+  while((enes.location.x<destX)&&(enes.location.y>destY)&&distanceToMission()>=locError){
+  enes.println("in forward loop 2");
+  digitalWrite(in1, HIGH);
+  digitalWrite(in2, LOW);
+  digitalWrite(in3, HIGH);
+  digitalWrite(in4, LOW);
+  if((foundObstacle())){
+      stopMotors(1);
+      return false;
+    }
+  enes.println("no obstacle");
+  }
+  }
+  enes.println("exiting forward motion");
+  return true;
+}
+
+//Turns left a certain angle
+void turnLeft(float t){
+  float turnAngle=.4;
+  while(enes.location.theta<t+turnAngle){
+  enes.updateLocation();
+  digitalWrite(in1, LOW);
+  digitalWrite(in2, HIGH);
+  digitalWrite(in3, HIGH);
+  digitalWrite(in4, LOW);
+  }
+ }
+
+
+
+// *************************TURN RIGHT************************************
+//Turns right a certain angle
+void turnRight(float t){
+  float turnAngle=.4;
+  while(enes.location.theta>t-turnAngle){
+  enes.updateLocation();
+  digitalWrite(in1, HIGH);
+  digitalWrite(in2, LOW);
+  digitalWrite(in3, LOW);
+  digitalWrite(in4, HIGH);
+  }
+  }
+
+
+
+
+// *************************DRIVE BACKWARDS************************************
+//drive backwards a certain distance
+void driveBackward(float d, float x, float y, float t){
+  float backwardsX = x-(d*cos(abs(t)));
+  float backwardsY;
+  if(t>0){
+  enes.println("t>0 : back");
+  backwardsY=y-(d*sin(abs(t)));
+  enes.updateLocation();
+  while((enes.location.x>backwardsX)&&(enes.location.y>backwardsY)){
+    enes.updateLocation();
+    enes.println("gonna drive backwards");
+    digitalWrite(in1, LOW);
+    digitalWrite(in2, HIGH);
+    digitalWrite(in3, LOW );
+    digitalWrite(in4, HIGH);
+    }
+  }
+  else if(t<=0){
+    enes.println("t<=0 : back");
+  backwardsY=y+(d*sin(abs(t)));
+  while((enes.location.x>backwardsX)&&(enes.location.y<backwardsY)){
+  enes.updateLocation();
+  enes.println("gonna drive backwards");
+    digitalWrite(in1, LOW);
+    digitalWrite(in2, HIGH);
+    digitalWrite(in3, LOW);
+    digitalWrite(in4, HIGH);
+  }
+  }
+  enes.println("exiting drive backwards");
+}
+
+
+// *************************STOP MOTORS************************************
+void stopMotors(float t){
+  digitalWrite(in1, LOW);
+  digitalWrite(in2, LOW);
+  digitalWrite(in3, LOW);
+  digitalWrite(in4, LOW);
+  delay(t*1000);
+}
+
+
+
+// *************************DISTANCE TO DESTINATION*********************************
+float distanceToMission(){
+  enes.updateLocation();
+  enes.retrieveDestination();
+  float currentX = enes.location.x;
+  float currentY = enes.location.y;
+  float destinationX = enes.destination.x;
+  float destinationY = enes.destination.y;
+  float deltY = (destinationY - currentY);
+  float deltX = (destinationX - currentX);
+  float distance=sqrt(pow(deltY, 2)+pow(deltX, 2));
+  enes.println(distance);
+  return distance;
+}
+
+
+// *************************FOUND OBSTACLE************************************
+boolean foundObstacle() {
+    enes.updateLocation();
+    if((enes.location.x > 1)&&(enes.location.x < 2.8)) {
+      int sensorVal = analogRead(irSensorPin);
+    enes.println(sensorVal);
+    if(sensorVal > 350 ) {
+      return true;
+    }
+    else {
+      return false;
+    }
+    }
+    else {
+      return false;
+    }
+}
+
+
+
+// *************************NAVIGATION************************************
+boolean navigation(){
+  boolean navigated=false;
+ //calculate distance to destination, not used in actual nav
+  distanceToMission();
+  //move forward
+  boolean obstacle = true;
+  if(distanceToMission()<=locError){
+    missionSite();
+    enes.println("NAVIGATION COMPLETE");
+    enes.navigated();
+    return true;
+  }
+  while(obstacle){
+    enes.println("in obstacle loop");
+    distanceToMission();
+    obstacle = driveForward(.3, enes.location.x, enes.location.y, enes.location.theta);
+    missionSite();
+  }
+  enes.println("drove forward");
+  //obstacle is detected
+  if(foundObstacle()){
+    enes.updateLocation();
+    enes.println("Found Obstacle");
+    driveBackward(.45, enes.location.x, enes.location.y, enes.location.theta);
+    stopMotors(1000);
+    enes.updateLocation();
+    if (enes.location.y <= 1.2) {
+      enes.println("turning left");
+      turnLeft(enes.location.theta);
+    }
+    if (enes.location.y > 1.2) {
+      enes.println("turning right");
+      turnRight(enes.location.theta);
+    }
+    driveForward(.4, enes.location.x, enes.location.y, enes.location.theta);
+    missionSite();
+  }
+  return navigated;
+}
+
+
+
+// *************************INITIALPH************************************
+boolean initialpH(){
+static unsigned long samplingTime = millis();
+static unsigned long printTime = millis();
+static float pHValue,voltage;
+int counter;
+if(millis()-samplingTime > samplingInterval)
+{
+pHArray[pHArrayIndex++]=analogRead(SensorPin);
+if(pHArrayIndex==ArrayLenth)pHArrayIndex=0;
+voltage = avergearray(pHArray, ArrayLenth)*5.0/1024;
+pHValue = 3.5*voltage+Offset;
+samplingTime=millis();
+}
+if(millis() - printTime > printInterval) //Every 800 milliseconds, print a numerical, convert the state of the LED indicator
+{
+enes.print(" pH value: ");
+enes.println(pHValue);
+counter++;
+digitalWrite(LED,digitalRead(LED)^1);
+printTime=millis();
+if(counter>=10){
+  enes.baseObjective(pHValue);
+  return true;
+}
+}
+return false;
+}
+
+// *************************USED WITH INITIAL PH (DO NOT TOUCH)************************************
+double avergearray(int* arr, int number){
+int i;
+int max,min;
+double avg;
+long amount=0;
+if(number<=0){
+enes.println("Error number for the array to avraging!/n");
+return 0;
+}
+if(number<5){ //less than 5, calculated directly statistics
+for(i=0;i<number;i++){
+amount+=arr[i];
+}
+avg = amount/number;
+return avg;
+}
+else{
+if(arr[0]<arr[1]){
+min = arr[0];max=arr[1];
+}
+else{
+min=arr[1];max=arr[0];
+}
+for(i=2;i<number;i++){
+if(arr[i]<min){
+amount+=min; //arr<min
+min=arr[i];
+}else {
+if(arr[i]>max){
+amount+=max; //arr>max
+max=arr[i];
+}else{
+amount+=arr[i]; //min<=arr<=max
+}
+}//if
+}//for
+avg = (double)amount/(number-2);
+}//if
+return avg;
+}
+
+// *************************pH DROP************************************
+void pHDrop() {
+  analogWrite(enA1, 100);
+  analogWrite(enB1, 100);
+  delay(3000);
+  
+  mcp.digitalWrite(in5, LOW);
+  mcp.digitalWrite(in6, HIGH);
+  mcp.digitalWrite(in7, LOW);
+  mcp.digitalWrite(in8, HIGH);
+
+  delay(3500);
+  
+  mcp.digitalWrite(in5, LOW);
+  mcp.digitalWrite(in6, LOW);
+  mcp.digitalWrite(in7, LOW);
+  mcp.digitalWrite(in8, LOW); 
+}
